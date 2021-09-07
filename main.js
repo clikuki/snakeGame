@@ -24,23 +24,27 @@ const moveSquare = (() =>
 
 	const draw = () =>
 	{
-		// console.log(axis, sign, coords[axis]);
+		console.log(coords.x, coords.y)
 
-		clearCanvas();
-		const prevColor = ctx.fillStyle;
-
-		ctx.fillStyle = 'white';
-
-		const pos = {
-			x: getNewPos(gap, size.w, coords.x),
-			y: getNewPos(gap, size.h, coords.y),
+		if(coords[axis] + sign < 33 && coords[axis] + sign > -1)
+		{
+			clearCanvas();
+			const prevColor = ctx.fillStyle;
+	
+			ctx.fillStyle = 'white';
+	
+			const pos = {
+				x: getNewPos(gap, size.w, coords.x),
+				y: getNewPos(gap, size.h, coords.y),
+			}
+	
+			ctx.fillRect(pos.x, pos.y, size.w, size.h);
+	
+			ctx.fillStyle = prevColor;
+	
+			coords[axis] += sign;
 		}
 
-		ctx.fillRect(pos.x, pos.y, size.w, size.h);
-
-		ctx.fillStyle = prevColor;
-
-		coords[axis] += sign;
 		requestAnimationFrame(draw)
 	}
 
