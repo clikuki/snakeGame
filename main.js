@@ -12,7 +12,7 @@ const drawGridSquares = (() =>
 {
 	const gap = 5;
 
-	const len = canvas.height / 40 - gap;
+	const len = canvas.width / 40 - gap;
 
 	const getGridPos = (() =>
 	{
