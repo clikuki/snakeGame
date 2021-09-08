@@ -2,23 +2,13 @@
 const canvas = document.querySelector('#canvas');
 const ctx = canvas.getContext('2d');
 
-const specialDraw = (color, drawFunc) =>
+const clearCanvas = () =>
 {
-	const prevColor = ctx.fillStyle;
+	ctx.fillStyle = 'black';
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
 
-	ctx.fillStyle = color;
-	drawFunc();
-	ctx.fillStyle = prevColor;
-};
-
-const clearCanvas = (() =>
-{
-	const drawBlack = () => ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-	return () => specialDraw('black', drawBlack);
-})()
-
-const drawSquare = (() =>
+const drawGridSquares = (() =>
 {
 	const gap = 5;
 
@@ -38,11 +28,23 @@ const drawSquare = (() =>
 		});
 	})()
 
-	return (x, y, color) =>
+	return (points, color) =>
 	{
-		const pos = getGridPos(x, y);
+		ctx.fillStyle = color;
+		ctx.beginPath();
 
-		specialDraw(color, () => ctx.fillRect(pos.x, pos.y, len, len));
+		for(const point of points)
+		{
+			const {x, y} = getGridPos(point.x, point.y);
+
+			ctx.moveTo(x, y);
+			ctx.lineTo(x + len, y);
+			ctx.lineTo(x + len, y + len);
+			ctx.lineTo(x, y + len);
+			ctx.lineTo(x, y);
+		}
+
+		ctx.fill();
 	}
 })()
 
@@ -52,12 +54,3 @@ const init = () =>
 }
 
 init();
-
-for(let i = 0; i < 40; i++)
-{
-	if(drawSquare(i, 0, 'white'))
-	{
-		console.log(i);
-		break;
-	}
-}
