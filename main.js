@@ -33,7 +33,7 @@ const gameOver = (() =>
 
 const apple = (() =>
 {
-	const getRandPos = () => Math.floor(Math.random() * (columnRowNum + 1));
+	const getRandPos = () => Math.floor(Math.random() * (columnRowNum));
 
 	const pos = {
 		x: getRandPos(),
