@@ -4,6 +4,33 @@ const ctx = canvas.getContext('2d');
 
 const columnRowNum = 40;
 
+let isGameOver = false;
+
+const gameOver = (() =>
+{
+	const gameOverStr = 'GAME OVER';
+
+	const textSize = {
+		w: ctx.measureText(gameOverStr).width,
+		h: 20,
+	}
+
+	const pos = {
+		x: (canvas.width / 2) - (textSize.w / 2),
+		y: (canvas.height / 2) - (textSize.h / 2),
+	}
+
+	return () =>
+	{
+		isGameOver = true;
+	
+		ctx.fillStyle = 'red';
+		ctx.font = `${textSize.h}px sans-serif`;
+	
+		ctx.fillText(gameOverStr, pos.x, pos.y);
+	}
+})()
+
 const apple = (() =>
 {
 	const getRandPos = () => Math.floor(Math.random() * (columnRowNum + 1));
@@ -27,6 +54,8 @@ const apple = (() =>
 
 		return () =>
 		{
+			if(isGameOver) return;
+
 			const snakeBody = snake.get();
 	
 			for(const axis in pos)
@@ -245,19 +274,22 @@ const snake = (() =>
 
 		return () =>
 		{
+			if(isGameOver) return;
+
 			const newHead = getNewHead();
 
-			if(hasHitWall(newHead) || hasHitSelf(body, newHead)) return;
-			
-			if(isInApple(newHead))
-			{
-				grow();
-				apple.eat();
+			if(hasHitWall(newHead) || hasHitSelf(body, newHead)) gameOver();
+			else {
+				if(isInApple(newHead))
+				{
+					grow();
+					apple.eat();
+				}
+	
+				move(newHead)
+				clearCanvas();
+				drawGridSquares(body, 'white');
 			}
-
-			move(newHead)
-			clearCanvas();
-			drawGridSquares(body, 'white');
 		}
 	})()
 
