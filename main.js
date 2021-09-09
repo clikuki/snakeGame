@@ -91,31 +91,37 @@ const snake = (() =>
 
 		let currDirection = directionMap.right;
 
+		const isMovingBackWards = (a, b) =>
+		{
+			const absDiffIsOne = Math.abs(a - b) === 1;
+			const smallestIsOne = Math.min(a, b) !== 1;
+			const biggestIsTwo = Math.max(a, b) !== 2;
+			const isNotOneAndTwo = smallestIsOne && biggestIsTwo;
+
+			return absDiffIsOne && (isNotOneAndTwo);
+		}
+
 		return {
 			get: () => currDirection,
 			change: (newDirection) =>
 			{
 				newDirection = directionMap[newDirection];
 
-				if((newDirection === 0 && currDirection === 1)
-				|| (newDirection === 1 && currDirection === 0)
-				|| (newDirection === 2 && currDirection === 3)
-				|| (newDirection === 3 && currDirection === 2)) return;
+				if(isMovingBackWards(newDirection, currDirection)) return;
 
 				currDirection = newDirection;
 			},
 		}
 	})()
 
-	const update = (() =>
+	const getNewHead = (() =>
 	{
 		const dupe = (obj) => JSON.parse(JSON.stringify(obj));
-
-		const isOutOfBounds = ({ x, y }) => x >= columnRowNum || x < 0 || y >= columnRowNum || y < 0;
-
+	
 		return () =>
 		{
 			const newHead = dupe(body[body.length - 1]);
+	
 			switch(direction.get())
 			{
 				case 0:
@@ -137,19 +143,59 @@ const snake = (() =>
 				default:
 					throw new Error(`Direction ${direction.get()} is invalid`);
 			}
-
-			if(isOutOfBounds(newHead)) return;
 	
+			return newHead;
+		}
+	})()
+
+	const update = (() =>
+	{
+		const hasHitWall = ({ x, y }) => x >= columnRowNum || x < 0 || y >= columnRowNum || y < 0;
+
+		const hasHitSelf = (() =>
+		{
+			const minLenToHitSelf = 5;
+
+			const isPosIsSame = ({ x: x1, y: y1 }, { x: x2, y: y2 }) => x1 === x2 && y1 === y2;
+
+			return (body, newHead) =>
+			{
+				if(body.length < minLenToHitSelf) return false;
+				
+				for(let i = 0; i < body.length - 1; i++)
+				{
+					const samePos = isPosIsSame(body[i], newHead);
+
+					if(samePos) return true;
+				}
+
+				return false;
+			}
+		})()
+
+		const move = (newHead) =>
+		{
 			body.shift();
 			body.push(newHead);
+		}
+
+		return () =>
+		{
+			const newHead = getNewHead();
+
+			if(hasHitWall(newHead) || hasHitSelf(body, newHead)) return;
 	
+			move(newHead);
 			clearCanvas();
 			drawGridSquares(body, 'white');
 		}
 	})()
 
+	const grow = () => body.push(getNewHead());
+
 	return {
 		update,
+		grow,
 		direction: direction.change,
 	}
 })();
