@@ -4,6 +4,58 @@ const ctx = canvas.getContext('2d');
 
 const columnRowNum = 40;
 
+const apple = (() =>
+{
+	const getRandPos = () => Math.floor(Math.random() * (columnRowNum + 1));
+
+	const pos = {
+		x: getRandPos(),
+		y: getRandPos(),
+	}
+
+	const eat = (() =>
+	{
+		const isNotInSnake = (axis, coord, snakeBody) =>
+		{
+			for(const snakePart of snakeBody)
+			{
+				if(snakePart[axis] === coord) return false;
+			}
+
+			return true;
+		}
+
+		return () =>
+		{
+			const snakeBody = snake.get();
+	
+			for(const axis in pos)
+			{
+				let isInvalidPos = true;
+	
+				while(isInvalidPos)
+				{
+					const newPos = getRandPos();
+
+					if(isNotInSnake(axis, newPos, snakeBody))
+					{
+						isInvalidPos = false;
+						pos[axis] = newPos;
+					}
+				}
+			}
+		}
+	})()
+
+	const draw = () => drawGridSquares([pos], 'red');
+
+	return {
+		get: () => pos,
+		eat,
+		draw,
+	}
+})()
+
 const clearCanvas = () =>
 {
 	ctx.fillStyle = 'black';
@@ -173,6 +225,18 @@ const snake = (() =>
 			}
 		})()
 
+		const isInApple = (newHead) =>
+		{
+			const applePos = apple.get();
+			
+			for(const pos in newHead)
+			{
+				if(applePos[pos] !== newHead[pos]) return false;
+			}
+
+			return true;
+		}
+
 		const move = (newHead) =>
 		{
 			body.shift();
@@ -184,8 +248,14 @@ const snake = (() =>
 			const newHead = getNewHead();
 
 			if(hasHitWall(newHead) || hasHitSelf(body, newHead)) return;
-	
-			move(newHead);
+			
+			if(isInApple(newHead))
+			{
+				grow();
+				apple.eat();
+			}
+
+			move(newHead)
 			clearCanvas();
 			drawGridSquares(body, 'white');
 		}
@@ -193,9 +263,15 @@ const snake = (() =>
 
 	const grow = () => body.push(getNewHead());
 
+	const init = () =>
+	{
+		drawGridSquares(body, 'white');
+	}
+
 	return {
+		get: () => body,
 		update,
-		grow,
+		init,
 		direction: direction.change,
 	}
 })();
@@ -217,11 +293,14 @@ const addEventListeners = () =>
 const gameLoop = () =>
 {
 	snake.update();
+	apple.draw();
 }
 
 const init = () =>
 {
 	clearCanvas();
+	snake.init();
+	apple.draw();
 	addEventListeners();
 	setInterval(gameLoop, 100);
 }
