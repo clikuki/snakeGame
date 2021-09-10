@@ -3,7 +3,9 @@ const canvas = document.querySelector('#canvas');
 const ctx = canvas.getContext('2d');
 
 const columnRowNum = 40;
+const minGameSpeed = 80;
 
+let gameSpeed = 200;
 let isGameOver = false;
 
 const gameOver = (() =>
@@ -54,8 +56,6 @@ const apple = (() =>
 
 		return () =>
 		{
-			if(isGameOver) return;
-
 			const snakeBody = snake.get();
 	
 			for(const axis in pos)
@@ -158,7 +158,7 @@ const snake = (() =>
 			x: 19,
 			y: 19,
 		},
-	]
+	];
 
 	const direction = (() =>
 	{
@@ -274,8 +274,6 @@ const snake = (() =>
 
 		return () =>
 		{
-			if(isGameOver) return;
-
 			const newHead = getNewHead();
 
 			if(hasHitWall(newHead) || hasHitSelf(body, newHead)) gameOver();
@@ -284,14 +282,20 @@ const snake = (() =>
 				{
 					grow();
 					apple.eat();
+					if(gameSpeed > minGameSpeed) gameSpeed -= 5;
 				}
-	
-				move(newHead)
-				clearCanvas();
-				drawGridSquares(body, 'white');
+				else move(newHead);
+
+				draw()
+				prevLastBody = body[0];
 			}
 		}
 	})()
+
+	const draw = () =>
+	{
+		drawGridSquares(body, 'white');
+	}
 
 	const grow = () => body.push(getNewHead());
 
@@ -322,11 +326,33 @@ const addEventListeners = () =>
 	})
 }
 
-const gameLoop = () =>
+const gameLoop = (() =>
 {
-	snake.update();
-	apple.draw();
-}
+	let oldTimeStamp = 0;
+
+	const update = () =>
+	{
+		if(!isGameOver)
+		{
+			clearCanvas();
+			snake.update();
+			apple.draw();
+		}
+	}
+
+	return (timeStamp) =>
+	{
+		const ms = timeStamp - oldTimeStamp;
+
+		if(ms >= gameSpeed)
+		{
+			oldTimeStamp = timeStamp;
+			update();
+		}
+		
+		requestAnimationFrame(gameLoop);
+	}
+})() 
 
 const init = () =>
 {
@@ -334,24 +360,7 @@ const init = () =>
 	snake.init();
 	apple.draw();
 	addEventListeners();
-	setInterval(gameLoop, 100);
+	requestAnimationFrame(gameLoop);
 }
 
 init();
-
-// const gameLoop = (() =>
-// {
-// 	let oldTimeStamp = 0;
-
-// 	return (timeStamp) =>
-// 	{
-// 		const time = (timeStamp - oldTimeStamp) / 1000;
-// 		oldTimeStamp = timeStamp;
-
-// 		// Call update with time
-		
-// 		requestAnimationFrame(gameLoop);
-// 	}
-// })()
-
-// requestAnimationFrame(gameLoop);
