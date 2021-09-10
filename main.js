@@ -3,33 +3,47 @@ const canvas = document.querySelector('#canvas');
 const ctx = canvas.getContext('2d');
 
 const columnRowNum = 40;
+const maxGameSpeed = 200;
 const minGameSpeed = 80;
 
-let gameSpeed = 200;
+let gameSpeed = maxGameSpeed;
 let isGameOver = false;
 
 const gameOver = (() =>
 {
-	const gameOverStr = 'GAME OVER';
-
-	const textSize = {
-		w: ctx.measureText(gameOverStr).width,
-		h: 20,
-	}
+	const textArray = [
+		{
+			text: 'GAME OVER',
+			height: 30,
+		},
+		{
+			text: 'Press Enter to restart',
+			height: 20,
+		},
+	]
 
 	const pos = {
-		x: (canvas.width / 2) - (textSize.w / 2),
-		y: (canvas.height / 2) - (textSize.h / 2),
+		x: canvas.width / 2,
+		y: canvas.height / 2,
 	}
 
 	return () =>
 	{
 		isGameOver = true;
-	
+
+		ctx.textBaseline = 'middle';
+		ctx.textAlign = "center";
 		ctx.fillStyle = 'red';
-		ctx.font = `${textSize.h}px sans-serif`;
-	
-		ctx.fillText(gameOverStr, pos.x, pos.y);
+
+		for(let i = 0; i < textArray.length; i++)
+		{
+			ctx.font = '';
+
+			const { text, height } = textArray[i];
+			
+			ctx.font = `${height}px sans-serif`;
+			ctx.fillText(text, pos.x, pos.y + (i * 20));
+		}
 	}
 })()
 
@@ -133,37 +147,45 @@ const drawGridSquares = (() =>
 
 const snake = (() =>
 {
-	const body = [
-		{
-			x: 14,
-			y: 19,
-		},
-		{
-			x: 15,
-			y: 19,
-		},
-		{
-			x: 16,
-			y: 19,
-		},
-		{
-			x: 17,
-			y: 19,
-		},
-		{
-			x: 18,
-			y: 19,
-		},
-		{
-			x: 19,
-			y: 19,
-		},
-	];
+	const dupe = (obj) => JSON.parse(JSON.stringify(obj));
+
+	const getStartSnake = (() =>
+	{
+		const startingSnake = [
+			{
+				x: 14,
+				y: 19,
+			},
+			{
+				x: 15,
+				y: 19,
+			},
+			{
+				x: 16,
+				y: 19,
+			},
+			{
+				x: 17,
+				y: 19,
+			},
+			{
+				x: 18,
+				y: 19,
+			},
+			{
+				x: 19,
+				y: 19,
+			},
+		]
+
+		return () => dupe(startingSnake);
+	})()
+
+	const body = getStartSnake();
 
 	const direction = (() =>
 	{
 		const directionMap = {
-			
 			up: 0,
 			down: 1,
 			left: 2,
@@ -195,39 +217,34 @@ const snake = (() =>
 		}
 	})()
 
-	const getNewHead = (() =>
+	const getNewHead =  () =>
 	{
-		const dupe = (obj) => JSON.parse(JSON.stringify(obj));
-	
-		return () =>
+		const newHead = dupe(body[body.length - 1]);
+
+		switch(direction.get())
 		{
-			const newHead = dupe(body[body.length - 1]);
-	
-			switch(direction.get())
-			{
-				case 0:
-					newHead.y--;
-					break;
-	
-				case 1:
-					newHead.y++;
-					break;
-	
-				case 2:
-					newHead.x--;
-					break;
-	
-				case 3:
-					newHead.x++;
-					break;
-	
-				default:
-					throw new Error(`Direction ${direction.get()} is invalid`);
-			}
-	
-			return newHead;
+			case 0:
+				newHead.y--;
+				break;
+
+			case 1:
+				newHead.y++;
+				break;
+
+			case 2:
+				newHead.x--;
+				break;
+
+			case 3:
+				newHead.x++;
+				break;
+
+			default:
+				throw new Error(`Direction ${direction.get()} is invalid`);
 		}
-	})()
+
+		return newHead;
+	}
 
 	const update = (() =>
 	{
@@ -276,7 +293,11 @@ const snake = (() =>
 		{
 			const newHead = getNewHead();
 
-			if(hasHitWall(newHead) || hasHitSelf(newHead)) gameOver();
+			if(hasHitWall(newHead) || hasHitSelf(newHead))
+			{
+				draw()
+				gameOver();
+			}
 			else {
 				if(isInApple(newHead))
 				{
@@ -285,10 +306,10 @@ const snake = (() =>
 					if(gameSpeed > minGameSpeed) gameSpeed -= 5;
 				}
 				else move(newHead);
-			}
 
-			draw()
-			prevLastBody = body[0];
+				draw()
+				prevLastBody = body[0];
+			}
 		}
 	})()
 
@@ -299,6 +320,19 @@ const snake = (() =>
 
 	const grow = () => body.push(getNewHead());
 
+	const restart = () =>
+	{
+		direction.change('right');
+		body.length = [];
+
+		const newBody = getStartSnake();
+
+		for(const snakePart of newBody)
+		{
+			body.push(snakePart);
+		}
+	}
+
 	const init = () =>
 	{
 		drawGridSquares(body, 'white');
@@ -308,21 +342,32 @@ const snake = (() =>
 		get: () => body,
 		update,
 		init,
+		restart,
 		direction: direction.change,
 	}
 })();
+
+const restart = () =>
+{
+	isGameOver = false;
+	gameSpeed = maxGameSpeed;
+	snake.restart();
+	apple.eat();
+}
 
 const addEventListeners = () =>
 {
 	document.addEventListener('keydown', (e) =>
 	{
 		const arrow = 'Arrow';
+		const key = e.key;
 
 		if(e.key.includes(arrow))
 		{
-			const direction = e.key.replace(arrow, '').toLowerCase();
+			const direction = key.replace(arrow, '').toLowerCase();
 			snake.direction(direction);
 		}
+		else if(isGameOver && key === 'Enter') restart();
 	})
 }
 
