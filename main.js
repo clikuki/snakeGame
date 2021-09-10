@@ -208,11 +208,11 @@ const snake = (() =>
 			get: () => currDirection,
 			change: (newDirection) =>
 			{
-				newDirection = directionMap[newDirection];
-
-				if(isMovingBackWards(newDirection, currDirection)) return;
-
-				currDirection = newDirection;
+				const numDirection = directionMap[newDirection];
+			
+				if(!isGameOver && isMovingBackWards(numDirection, currDirection)) return;
+				
+				currDirection = numDirection;
 			},
 		}
 	})()
@@ -349,10 +349,10 @@ const snake = (() =>
 
 const restart = () =>
 {
-	isGameOver = false;
-	gameSpeed = maxGameSpeed;
 	snake.restart();
 	apple.eat();
+	isGameOver = false;
+	gameSpeed = maxGameSpeed;
 }
 
 const addEventListeners = () =>
