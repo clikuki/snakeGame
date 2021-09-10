@@ -239,7 +239,7 @@ const snake = (() =>
 
 			const isPosIsSame = ({ x: x1, y: y1 }, { x: x2, y: y2 }) => x1 === x2 && y1 === y2;
 
-			return (body, newHead) =>
+			return (newHead) =>
 			{
 				if(body.length < minLenToHitSelf) return false;
 				
@@ -276,7 +276,7 @@ const snake = (() =>
 		{
 			const newHead = getNewHead();
 
-			if(hasHitWall(newHead) || hasHitSelf(body, newHead)) gameOver();
+			if(hasHitWall(newHead) || hasHitSelf(newHead)) gameOver();
 			else {
 				if(isInApple(newHead))
 				{
@@ -285,10 +285,10 @@ const snake = (() =>
 					if(gameSpeed > minGameSpeed) gameSpeed -= 5;
 				}
 				else move(newHead);
-
-				draw()
-				prevLastBody = body[0];
 			}
+
+			draw()
+			prevLastBody = body[0];
 		}
 	})()
 
